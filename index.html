@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Platform</title>
+<style>
+:root{--bg:#dcecff;--bg2:#0b3d91;--card:#1259d6;--acc:#ffd23f;--line:#3b78e6;--soft:#c9dcff}
+*{box-sizing:border-box}
+body{margin:0;font-family:ui-rounded,'Trebuchet MS',system-ui,sans-serif;background:var(--bg);color:#0a2f6e}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:var(--bg2);color:#fff;border-bottom:4px solid var(--acc);position:sticky;top:0;z-index:5}
+h1{margin:0;font-size:1.5rem;font-weight:800;letter-spacing:.5px}
+#plus{width:48px;height:48px;border-radius:14px;border:0;background:var(--acc);color:#0b3d91;font-size:30px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #b8941a}#plus:active{transform:translateY(2px);box-shadow:0 1px 0 #b8941a}
+#who{margin-right:12px;color:var(--soft);font-size:.9rem}
+main{padding:20px;max-width:1000px;margin:auto}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.card{background:#fff;border:2px solid #0b3d91;border-radius:16px;padding:0 0 14px;overflow:hidden;cursor:pointer;box-shadow:0 4px 0 #0b3d91}.card:active{transform:translateY(2px);box-shadow:0 2px 0 #0b3d91}.card::before{content:'';display:block;height:80px;background:#1259d6;margin-bottom:12px}.card:nth-child(3n+2)::before{background:#ffd23f}.card:nth-child(3n)::before{background:#37b6ff}
+.card b,.card small{display:block;padding:0 14px}.card b{margin-bottom:4px;font-size:1.05rem}.card small{color:#3b5a99}.empty{color:#3b5a99}
+dialog{border:0;border-radius:14px;padding:22px;width:min(560px,94vw);background:#fff;color:#12203d;max-height:94vh}
+dialog.big{width:min(760px,96vw)}
+dialog::backdrop{background:rgba(5,20,50,.7)}
+label{display:block;margin:10px 0 4px;font-size:.9rem}
+input,textarea{width:100%;padding:10px;border:1px solid #b8c8ea;border-radius:8px;font:inherit}
+input[type=checkbox]{width:auto}
+button.b{background:var(--card);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;cursor:pointer;margin-top:10px}
+button.b.sec{background:#fff;color:#12203d;border:1px solid #b8c8ea}button.b.sm{padding:6px 12px;font-size:.85rem}
+button.b:disabled{opacity:.4;cursor:not-allowed}
+button.l{background:none;border:0;color:#1259d6;cursor:pointer;font:inherit;padding:0;margin-top:10px}
+.tabs{display:flex;gap:8px;margin-bottom:8px}.tabs button{flex:1;padding:9px;border:1px solid #b8c8ea;background:#fff;border-radius:8px;cursor:pointer;font:inherit}
+.tabs .on{background:var(--card);color:#fff}
+.err{color:#c0262d;min-height:1.2em;margin-top:6px}
+.row{display:flex;gap:8px;align-items:center}.row.b0{margin-top:0}
+.x{float:right;background:none;border:0;font-size:22px;cursor:pointer}
+#scene{position:relative;width:100%;aspect-ratio:400/240;background:#cfe0ff;border-radius:8px;overflow:hidden;touch-action:none}
+#scene div{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;cursor:grab;user-select:none}
+#scene div.sel{outline:2px solid #1259d6;outline-offset:2px}
+#chips{display:flex;gap:6px;flex-wrap:wrap}#chips button{border:1px solid #b8c8ea;background:#fff;border-radius:16px;padding:6px 12px;cursor:pointer;font:inherit}
+#ftabs{display:flex;background:#091226;border-radius:8px 8px 0 0;overflow-x:auto}
+#ftabs button{background:none;border:0;border-top:2px solid transparent;color:#9fb4e0;padding:8px 14px;font:13px ui-monospace,Menlo,Consolas,monospace;cursor:pointer}
+#ftabs button.on{background:#0d1b36;color:#fff;border-top-color:var(--acc)}
+#editor{display:flex;background:#0d1b36;height:240px;border-radius:0 0 8px 8px;overflow:hidden}
+#gut{padding:10px 8px;color:#5b709e;text-align:right;white-space:pre;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;overflow:hidden;min-width:38px}
+#code{flex:1;height:100%;border:0;border-radius:0;background:transparent;color:#e6edff;font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;resize:none;padding:10px 10px 10px 4px;white-space:pre;outline:0}
+#console{background:#091226;color:#8fe0a8;font:12px ui-monospace,Menlo,Consolas,monospace;padding:8px 10px;border-radius:8px;margin-top:8px;max-height:90px;overflow:auto;white-space:pre-wrap}
+#console .e{color:#ff8a8a}
+iframe{width:100%;aspect-ratio:400/240;border:1px solid #b8c8ea;border-radius:8px;margin-top:8px;background:#fff}
+#pf{aspect-ratio:400/240}
+</style></head><body>
+<header><h1>Game Platform</h1><div style="display:flex;align-items:center"><span id="who"></span><button id="plus" aria-label="Create a game">+</button></div></header>
+<main><div id="grid"></div></main>
+
+<dialog id="auth"><button class="x" onclick="auth.close()">×</button>
+<h2 id="authT">Create an account</h2>
+<div id="uWrap"><label>Username</label><input id="un" autocomplete="username"></div>
+<label>Email</label><input id="em" type="email" autocomplete="email">
+<label>Password</label><input id="pw" type="password" autocomplete="new-password">
+<div class="err" id="authE"></div>
+<button class="b" id="authB">Create account</button><br>
+<button class="l" id="authS">I already have an account</button></dialog>
+
+<dialog id="make" class="big"><button class="x" onclick="stopRun();make.close()">×</button>
+<h2>Make a game</h2>
+<div class="tabs"><button id="t1" class="on">Build</button><button id="t2">Code</button></div>
+
+<div id="buildBox"><div id="scene"></div>
+<label>Add to your game</label><div id="chips"></div>
+<div class="row"><button class="b sm" id="del">Remove selected</button></div></div>
+
+<div id="codeBox" hidden>
+<div id="ftabs"></div>
+<div id="editor"><div id="gut">1</div><textarea id="code" spellcheck="false" wrap="off"></textarea></div>
+<div class="row"><button class="b" id="run">Run</button><button class="b sec" id="stop">Stop</button></div>
+<iframe id="frame" sandbox="allow-scripts" hidden></iframe>
+<div id="console">Console is empty.</div></div>
+
+<div id="pub"><div class="row"><input type="checkbox" id="mp"><label for="mp" style="margin:0">Multiplayer (scripts can use net.join and net.send)</label></div>
+<label>Game title</label><input id="title" maxlength="60">
+<div class="row"><input type="checkbox" id="fin"><label for="fin" style="margin:0">My game is finished</label></div>
+<div class="err" id="makeE"></div>
+<button class="b" id="pubB" disabled>Publish</button></div></dialog>
+
+<dialog id="play" class="big"><button class="x" onclick="play.close();pf.srcdoc=''">×</button><h2 id="pt"></h2><iframe id="pf" sandbox="allow-scripts"></iframe></dialog>
+<script type="text/plain" id="engineSrc">
+(function(){
+const D=window.GAME,cv=document.getElementById('c'),g=cv.getContext('2d');
+const log=(t,e)=>parent.postMessage({log:typeof t==='object'?JSON.stringify(t):String(t),err:!!e},'*');
+const keys={},kh={},ups=[];
+addEventListener('keydown',e=>{keys[e.key]=1;if(e.key.startsWith('Arrow')||e.key===' ')e.preventDefault()});
+addEventListener('keyup',e=>delete keys[e.key]);
+addEventListener('error',e=>log(e.message,true));
+const T={Car:['#ffd23f',40,22],Road:['#4a4a4a',400,60],Wall:['#8b5a2b',40,40],Tree:['#2e8b3d',30,30],Coin:['#ffb300',16,16],Enemy:['#d33',30,30]};
+let objs=D.objects.map(o=>{const d=T[o.type]||['#999',30,30];
+ return Object.assign({w:d[1],h:d[2],color:d[0],angle:0,speed:0},o,{turn(a){this.angle+=a},move(dx,dy){this.x+=dx;this.y+=dy},
+  hits(b){return Math.abs(this.x-b.x)<(this.w+b.w)/2&&Math.abs(this.y-b.y)<(this.h+b.h)/2}})});
+const scene={get:n=>objs.find(o=>o.type===n||o.name===n),getAll:n=>objs.filter(o=>o.type===n),remove:o=>{objs=objs.filter(x=>x!==o)},width:400,height:240};
+const onKey=(k,f)=>{kh[k]=f},onUpdate=f=>ups.push(f);
+let es,room;
+const net={join(r,cb){room=r;es=new EventSource(D.base+'/api/room/'+encodeURIComponent(r)+'/events');es.onmessage=e=>cb(JSON.parse(e.data))},
+ send(d){if(room)fetch(D.base+'/api/room/'+encodeURIComponent(room)+'/send',{method:'POST',body:JSON.stringify(d)})}};
+Object.values(D.files).forEach(code=>{try{new Function('scene','onKey','onUpdate','log','net',code)(scene,onKey,onUpdate,log,net)}catch(e){log(e.message,true)}});
+function frame(){
+ try{for(const k in keys)if(kh[k])kh[k]();ups.forEach(f=>f())}catch(e){log(e.message,true)}
+ objs.forEach(o=>{if(o.speed){o.x+=Math.cos(o.angle*Math.PI/180)*o.speed;o.y+=Math.sin(o.angle*Math.PI/180)*o.speed}if(o.type==='Car')o.speed*=0.97});
+ g.clearRect(0,0,400,240);g.fillStyle='#cfe0ff';g.fillRect(0,0,400,240);
+ [...objs].sort((a,b)=>(b.type==='Road')-(a.type==='Road')).forEach(o=>{g.save();g.translate(o.x,o.y);g.rotate(o.angle*Math.PI/180);g.fillStyle=o.color;
+  if(o.type==='Tree'||o.type==='Coin'){g.beginPath();g.arc(0,0,o.w/2,0,7);g.fill()}else g.fillRect(-o.w/2,-o.h/2,o.w,o.h);g.restore()});
+ requestAnimationFrame(frame)}
+frame();
+})();
+</script>
+<script>
+const $=id=>document.getElementById(id);
+let token=localStorage.token,uname=localStorage.uname,mode='register',engine='';
+const DEF="// Drive the car with the arrow keys\nconst car = scene.get(\"Car\")\n\nonKey(\"ArrowUp\", () => car.speed += 0.3)\nonKey(\"ArrowDown\", () => car.speed -= 0.2)\nonKey(\"ArrowLeft\", () => car.turn(-3))\nonKey(\"ArrowRight\", () => car.turn(3))\n";
+const COL={Car:'#ffd23f',Road:'#4a4a4a',Wall:'#8b5a2b',Tree:'#2e8b3d',Coin:'#ffb300',Enemy:'#d33'};
+const SZ={Car:[40,22],Road:[400,60],Wall:[40,40],Tree:[30,30],Coin:[16,16],Enemy:[30,30]};
+let objs=[],files={'main.js':DEF},cur='main.js',sel=null;
+const api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token}});const d=await r.json();if(!r.ok)throw new Error(d.error||'Something went wrong.');return d};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const who=()=>$('who').textContent=uname?'@'+uname:'';
+const player=d=>`<body style="margin:0;background:#cfe0ff"><canvas id="c" width="400" height="240" style="width:100%;display:block"></canvas><script>window.GAME=${JSON.stringify({...d,base:location.origin}).replace(/</g,'\\u003c')}<\/script><script>${engine}<\/script></body>`;
+async function load(){engine=$('engineSrc').textContent;
+ const g=await fetch('/api/games').then(r=>r.json());
+ $('grid').innerHTML=g.length?g.map(x=>`<div class="card" data-id="${x.id}" data-t="${esc(x.title)}"><b>${esc(x.title)}</b><small>by ${esc(x.author)}${x.multiplayer?' · Multiplayer':''}</small></div>`).join(''):'<p class="empty">No games yet. Press + to publish the first one.</p>'}
+$('grid').onclick=async e=>{const c=e.target.closest('.card');if(!c)return;const g=await fetch('/api/games/'+c.dataset.id).then(r=>r.json());
+ $('pt').textContent=c.dataset.t;$('pf').srcdoc=player(g.data);$('play').showModal()};
+function setMode(m){mode=m;$('authT').textContent=m==='register'?'Create an account':'Log in';$('uWrap').hidden=m!=='register';$('authB').textContent=m==='register'?'Create account':'Log in';$('authS').textContent=m==='register'?'I already have an account':'Create a new account';$('authE').textContent=''}
+$('authS').onclick=()=>setMode(mode==='register'?'login':'register');
+$('plus').onclick=()=>{if(token){make.showModal();render()}else{setMode('register');auth.showModal()}};
+$('authB').onclick=async()=>{try{const d=await api('/api/'+mode,{method:'POST',body:JSON.stringify({email:$('em').value,password:$('pw').value,username:$('un').value})});
+ token=localStorage.token=d.token;uname=localStorage.uname=d.username;who();auth.close();make.showModal();render()}catch(e){$('authE').textContent=e.message}};
+function tab(n){$('t1').className=n==1?'on':'';$('t2').className=n==2?'on':'';$('buildBox').hidden=n!=1;$('codeBox').hidden=n!=2;if(n==2)drawFiles()}
+$('t1').onclick=()=>{stopRun();tab(1)};$('t2').onclick=()=>tab(2);
+function render(){const s=$('scene');s.innerHTML='';objs.forEach((o,i)=>{const d=document.createElement('div'),z=SZ[o.type];
+ d.textContent=o.type;d.style.cssText=`left:${o.x/4}%;top:${o.y/2.4}%;width:${z[0]/4}%;height:${z[1]/2.4}%;background:${COL[o.type]};${o.type==='Tree'||o.type==='Coin'?'border-radius:50%;':''}transform:translate(-50%,-50%) rotate(${o.angle||0}deg)`;
+ if(i===sel)d.className='sel';
+ d.onpointerdown=e=>{sel=i;d.setPointerCapture(e.pointerId);const r=s.getBoundingClientRect();
+  d.onpointermove=m=>{o.x=Math.max(0,Math.min(400,(m.clientX-r.left)/r.width*400));o.y=Math.max(0,Math.min(240,(m.clientY-r.top)/r.height*240));d.style.left=o.x/4+'%';d.style.top=o.y/2.4+'%'};
+  d.onpointerup=()=>{d.onpointermove=null;render()}};s.appendChild(d)})}
+$('chips').innerHTML=Object.keys(COL).map(t=>`<button data-t="${t}">${t}</button>`).join('');
+$('chips').onclick=e=>{const t=e.target.dataset.t;if(!t)return;objs.push({type:t,x:200,y:120,angle:0});sel=objs.length-1;render()};
+$('del').onclick=()=>{if(sel!==null){objs.splice(sel,1);sel=null;render()}};
+function drawFiles(){$('ftabs').innerHTML=Object.keys(files).map(n=>`<button class="${n===cur?'on':''}" data-n="${esc(n)}">${esc(n)}</button>`).join('')+'<button data-n="+" aria-label="New file">+</button>';
+ $('code').value=files[cur];gut()}
+$('ftabs').onclick=e=>{const n=e.target.dataset.n;if(!n)return;files[cur]=$('code').value;
+ if(n==='+'){let f=(prompt('File name','script.js')||'').trim();if(!f)return;if(!/\.js$/.test(f))f+='.js';if(!files[f])files[f]='';cur=f}else cur=n;drawFiles()};
+function gut(){const n=$('code').value.split('\n').length;$('gut').textContent=Array.from({length:n},(_,i)=>i+1).join('\n')}
+$('code').oninput=()=>{files[cur]=$('code').value;gut()};
+$('code').onscroll=()=>$('gut').scrollTop=$('code').scrollTop;
+$('code').onkeydown=e=>{if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.setRangeText('  ',s,t.selectionEnd,'end');files[cur]=t.value;gut()}};
+const data=()=>({objects:objs,files});
+function log(t,err){const c=$('console');if(c.textContent==='Console is empty.')c.textContent='';const d=document.createElement('div');d.textContent=t;if(err)d.className='e';c.appendChild(d);c.scrollTop=1e9}
+addEventListener('message',e=>{if(e.source===$('frame').contentWindow&&e.data&&'log'in e.data)log(e.data.log,e.data.err)});
+$('run').onclick=()=>{files[cur]=$('code').value;$('console').textContent='Console is empty.';
+ if(!objs.length){log('Add at least one object in the Build tab first.',true);return}
+ $('frame').hidden=false;$('frame').srcdoc=player(data());log('Running...')};
+function stopRun(){$('frame').srcdoc='';$('frame').hidden=true}
+$('stop').onclick=stopRun;
+$('fin').onchange=()=>$('pubB').disabled=!$('fin').checked;
+$('pubB').onclick=async()=>{files[cur]=$('code').value;try{await api('/api/games',{method:'POST',body:JSON.stringify({title:$('title').value,data:data(),multiplayer:$('mp').checked,finished:$('fin').checked})});
+ stopRun();make.close();objs=[];files={'main.js':DEF};cur='main.js';sel=null;$('title').value='';$('fin').checked=false;$('pubB').disabled=true;$('makeE').textContent='';tab(1);load()}catch(e){$('makeE').textContent=e.message}};
+who();load();
+</script></body></html>
